@@ -93,8 +93,7 @@ const noticeSchema = new mongoose.Schema({
   title: { 
     type: String, 
     required: true, 
-    trim: true,
-    maxlength: 500
+    trim: true
   }
 }, { timestamps: true });
 
@@ -489,50 +488,18 @@ app.get('/api/representatives', async (req, res) => {
   }
 });
 
-// Create representative with image
-// Create representative WITH JSON (without image upload)
-app.post('/api/representatives', async (req, res) => {
+// ✅ ONLY KEEP THIS ONE - With image upload
+app.post('/api/representatives', upload.single('image'), async (req, res) => {
   try {
     const { name, facebook, twitter, instagram } = req.body;
 
-    if (!name || name.trim() === '') {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Name is required' 
-      });
-    }
-
-    const newRepresentative = new Representative({
-      name: name.trim(),
-      facebook: facebook || '',
-      twitter: twitter || '',
-      instagram: instagram || '',
-      image: '', // Empty since no image
-      cloudinaryId: '' // Empty
+    console.log('📝 Creating representative with image:', { 
+      name, 
+      facebook, 
+      twitter, 
+      instagram,
+      hasImage: !!req.file 
     });
-
-    const savedRepresentative = await newRepresentative.save();
-    
-    res.status(201).json({
-      success: true,
-      message: 'Representative created successfully!',
-      data: savedRepresentative
-    });
-
-  } catch (error) {
-    console.error('❌ Error creating representative:', error.message);
-    res.status(400).json({ 
-      success: false, 
-      message: 'Failed to create representative',
-      error: error.message 
-    });
-  }
-});
-
-// Create representative WITH image (form-data) - আলাদা route
-app.post('/api/representatives/with-image', upload.single('image'), async (req, res) => {
-  try {
-    const { name, facebook, twitter, instagram } = req.body;
 
     if (!name || name.trim() === '') {
       return res.status(400).json({ 
@@ -552,6 +519,8 @@ app.post('/api/representatives/with-image', upload.single('image'), async (req, 
 
     const savedRepresentative = await newRepresentative.save();
     
+    console.log('✅ Representative created successfully:', savedRepresentative._id);
+    
     res.status(201).json({
       success: true,
       message: 'Representative created successfully!',
@@ -567,7 +536,6 @@ app.post('/api/representatives/with-image', upload.single('image'), async (req, 
     });
   }
 });
-
 // Update representative with image
 app.put('/api/representatives/:id', upload.single('image'), async (req, res) => {
   try {
